@@ -5,27 +5,34 @@ new bool:g_LoggedFileName = false;		/* Whether or not the file name has been log
 new g_ErrorCount = 0;				/* Current error count */
 new g_CurrentLine = 0;				/* Current line we're on */
 new String:g_Filename[PLATFORM_MAX_PATH];	/* Used for error messages */
-new String:map[255];
+new String:g_map[255];
+new Handle:g_map_idle_time;
+new Handle:g_players_change;
+new Handle:g_log_map_change;
 new Handle:g_MapsArray;
-new Handle:timer = INVALID_HANDLE; 
-new Handle:map_idle_time;
-new Handle:players_change;
-bool changeMap;
+new Handle:g_timer = INVALID_HANDLE; 
+bool g_changeMap;
 
 public Plugin:myinfo =
 {
 	name = "Auto Change Random Map",
 	author = "Gdk",
 	description = "Change to a random map for a defined player count after a defined time",
-	version = "1.0.0 ",
+	version = "1.1.3 ",
 	url = "topsecretgaming.net"
 }
 
 public OnPluginStart()
 {
-     	map_idle_time = CreateConVar("sm_acrm_idle_time","5","Time limit to change map", FCVAR_PLUGIN);
-      	players_change = CreateConVar("sm_acrm_players_change","0","How many players on server to start map change timer", FCVAR_PLUGIN);
+     	g_map_idle_time = CreateConVar("sm_acrm_idle_time","5","Time limit to change map", FCVAR_PLUGIN);
+      	g_players_change = CreateConVar("sm_acrm_players_change","0","How many players on server to start map change timer", FCVAR_PLUGIN);
+	g_log_map_change = CreateConVar("sm_acrm_log_map_change","0","Log map selection", FCVAR_PLUGIN);
 	AutoExecConfig(true, "auto_change_random_map");
+}
+
+public OnMapStart()
+{
+	ServerCommand("sv_hibernate_when_empty 0");
 }
 
 public OnConfigsExecuted()
@@ -33,36 +40,44 @@ public OnConfigsExecuted()
 	g_MapsArray = CreateArray(255);
 	ReadMaps();
 	SetNextmap();
-	LogMessage("Auto Change Random Map: %s.", map);
-	timer = CreateTimer(GetConVarFloat(map_idle_time)*60, mapChange); //Start checking
-	changeMap = true;
+	
+	PrintToServer("Auto Change Random Map: %s.", g_map);
+
+	if(GetConVarInt(g_log_map_change))
+		LogMessage("Auto Change Random Map: %s.", g_map);
+
+	g_timer = CreateTimer(GetConVarFloat(g_map_idle_time)*60, mapChange); //Start checking
+	g_changeMap = true;
 }
 
 public OnClientPutInServer(client)
 {
-	KillTimer(timer); 
-      	timer = INVALID_HANDLE; //Stop checking
-	changeMap = false;
+	if(GetRealClientCount(true) > GetConVarInt(g_players_change))
+	{
+		KillTimer(g_timer); 
+      		g_timer = INVALID_HANDLE; //Stop checking
+		g_changeMap = false;
+	}
 }
 
 public OnClientDisconnect_Post(client)
 {
-	if(GetRealClientCount(true) <= GetConVarInt(players_change))
+	if(GetRealClientCount(true) <= GetConVarInt(g_players_change))
 	{
-		timer = CreateTimer(GetConVarFloat(map_idle_time)*60, mapChange); //Start checking
-		changeMap = true;
+		g_timer = CreateTimer(GetConVarFloat(g_map_idle_time)*60, mapChange); //Start checking
+		g_changeMap = true;
 	}
 }
 
 public Action:mapChange(Handle:Timer)
 {
-	if(IsMapValid(map) && changeMap) 
+	if(IsMapValid(g_map) && g_changeMap) 
 	{
-		ServerCommand("changelevel %s", map);
+		ServerCommand("changelevel %s", g_map);
 	}
-	if(!IsMapValid(map))
+	if(!IsMapValid(g_map))
 	{
-		ParseError("Invalid map: %s", map);
+		ParseError("Invalid map: %s", g_map);
 	}
         
 	return Plugin_Handled;
@@ -138,7 +153,7 @@ public SetNextmap()
     	{
 		if(i == rand)
 		{
-        		GetArrayString(g_MapsArray, i, map, 255); //Set the map
+        		GetArrayString(g_MapsArray, i, g_map, 255); //Set the map
 		}
    	}
 
