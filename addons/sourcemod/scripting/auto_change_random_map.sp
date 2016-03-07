@@ -18,7 +18,7 @@ public Plugin:myinfo =
 	name = "Auto Change Random Map",
 	author = "Gdk",
 	description = "Change to a random map for a defined player count after a defined time",
-	version = "1.1.3 ",
+	version = "1.1.4 ",
 	url = "topsecretgaming.net"
 }
 
