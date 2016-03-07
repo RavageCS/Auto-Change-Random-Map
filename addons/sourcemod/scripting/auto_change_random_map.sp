@@ -10,7 +10,7 @@ new Handle:g_map_idle_time;
 new Handle:g_players_change;
 new Handle:g_log_map_change;
 new Handle:g_MapsArray;
-new Handle:g_timer = INVALID_HANDLE; 
+new Handle:g_timer; 
 bool g_changeMap;
 
 public Plugin:myinfo =
@@ -18,7 +18,7 @@ public Plugin:myinfo =
 	name = "Auto Change Random Map",
 	author = "Gdk",
 	description = "Change to a random map for a defined player count after a defined time",
-	version = "1.1.4 ",
+	version = "1.1.5",
 	url = "topsecretgaming.net"
 }
 
@@ -33,6 +33,7 @@ public OnPluginStart()
 public OnMapStart()
 {
 	ServerCommand("sv_hibernate_when_empty 0");
+	g_timer = INVALID_HANDLE;
 }
 
 public OnConfigsExecuted()
@@ -45,18 +46,23 @@ public OnConfigsExecuted()
 
 	if(GetConVarInt(g_log_map_change))
 		LogMessage("Auto Change Random Map: %s.", g_map);
-
-	g_timer = CreateTimer(GetConVarFloat(g_map_idle_time)*60, mapChange); //Start checking
-	g_changeMap = true;
+	if(g_timer == INVALID_HANDLE)
+	{
+		g_timer = CreateTimer(GetConVarFloat(g_map_idle_time)*60, mapChange); //Start checking
+		g_changeMap = true;
+	}
 }
 
 public OnClientPutInServer(client)
 {
 	if(GetRealClientCount(true) > GetConVarInt(g_players_change))
 	{
-		KillTimer(g_timer); 
-      		g_timer = INVALID_HANDLE; //Stop checking
-		g_changeMap = false;
+		if(g_timer != INVALID_HANDLE)
+		{
+			KillTimer(g_timer); 
+      			g_timer = INVALID_HANDLE; //Stop checking
+			g_changeMap = false;
+		}
 	}
 }
 
@@ -64,8 +70,11 @@ public OnClientDisconnect_Post(client)
 {
 	if(GetRealClientCount(true) <= GetConVarInt(g_players_change))
 	{
-		g_timer = CreateTimer(GetConVarFloat(g_map_idle_time)*60, mapChange); //Start checking
-		g_changeMap = true;
+		if(g_timer == INVALID_HANDLE)
+		{
+			g_timer = CreateTimer(GetConVarFloat(g_map_idle_time)*60, mapChange); //Start checking
+			g_changeMap = true;
+		}
 	}
 }
 
