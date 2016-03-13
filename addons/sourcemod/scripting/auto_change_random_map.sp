@@ -18,7 +18,7 @@ public Plugin:myinfo =
 	name = "Auto Change Random Map",
 	author = "Gdk",
 	description = "Change to a random map for a defined player count after a defined time",
-	version = "1.1.5",
+	version = "1.1.6",
 	url = "topsecretgaming.net"
 }
 
@@ -76,6 +76,11 @@ public OnClientDisconnect_Post(client)
 			g_changeMap = true;
 		}
 	}
+}
+
+public OnMapEnd()
+{
+	g_timer = INVALID_HANDLE;
 }
 
 public Action:mapChange(Handle:Timer)
