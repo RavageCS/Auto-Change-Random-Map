@@ -15,19 +15,19 @@ bool g_changeMap;
 
 public Plugin:myinfo =
 {
-	name = "Auto Change Random Map",
+	name = "Idle Random Map",
 	author = "Gdk",
 	description = "Change to a random map for a defined player count after a defined time",
-	version = "1.1.6",
-	url = "topsecretgaming.net"
+	version = "1.2.0",
+	url = "https://github.com/RavageCS/Idle-Change-Random-Map"
 }
 
 public OnPluginStart()
 {
-     	g_map_idle_time = CreateConVar("sm_acrm_idle_time","5","Time limit to change map", FCVAR_PLUGIN);
-      	g_players_change = CreateConVar("sm_acrm_players_change","0","How many players on server to start map change timer", FCVAR_PLUGIN);
-	g_log_map_change = CreateConVar("sm_acrm_log_map_change","0","Log map selection", FCVAR_PLUGIN);
-	AutoExecConfig(true, "auto_change_random_map");
+     	g_map_idle_time = CreateConVar("sm_irm_idle_time","5","Time limit to change map", FCVAR_PLUGIN);
+      	g_players_change = CreateConVar("sm_irm_players_change","0","How many players on server to start map change timer", FCVAR_PLUGIN);
+	g_log_map_change = CreateConVar("sm_irm_log_map_change","0","Log map selection", FCVAR_PLUGIN);
+	AutoExecConfig(true, "idle_random_map");
 }
 
 public OnMapStart()
@@ -42,10 +42,10 @@ public OnConfigsExecuted()
 	ReadMaps();
 	SetNextmap();
 	
-	PrintToServer("Auto Change Random Map: %s.", g_map);
+	PrintToServer("Idle Random Map: %s.", g_map);
 
 	if(GetConVarInt(g_log_map_change))
-		LogMessage("Auto Change Random Map: %s.", g_map);
+		LogMessage("Idle Random Map: %s.", g_map);
 	if(g_timer == INVALID_HANDLE)
 	{
 		g_timer = CreateTimer(GetConVarFloat(g_map_idle_time)*60, mapChange); //Start checking
@@ -100,7 +100,7 @@ public Action:mapChange(Handle:Timer)
 // Load maps from ini file
 public ReadMaps()
 {
-	BuildPath(Path_SM, g_Filename, sizeof(g_Filename), "configs/auto_change_random_map.ini");
+	BuildPath(Path_SM, g_Filename, sizeof(g_Filename), "configs/idle_random_map.ini");
 	
 	File file = OpenFile(g_Filename, "rt");
 	if (!file)
